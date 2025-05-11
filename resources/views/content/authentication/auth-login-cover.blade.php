@@ -60,7 +60,7 @@ $configData = Helper::applClasses();
       <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
         <h2 class="card-title fw-bold mb-1">Welcome to Vuexy! 👋</h2>
         <p class="card-text mb-2">Please sign-in to your account and start the adventure</p>
-        <form class="auth-login-form mt-2" action="/" method="GET">
+     <form class="auth-login-form mt-2" id="loginForm">
           <div class="mb-1">
             <label class="form-label" for="login-email">Email</label>
             <input class="form-control" id="login-email" type="text" name="login-email" placeholder="john@example.com" aria-describedby="login-email" autofocus="" tabindex="1" />
@@ -83,32 +83,96 @@ $configData = Helper::applClasses();
               <label class="form-check-label" for="remember-me"> Remember Me</label>
             </div>
           </div>
-          <button class="btn btn-primary w-100" tabindex="4">Sign in</button>
+          <button class="btn btn-primary w-100" type="submit" tabindex="4">Sign in</button>
         </form>
         <p class="text-center mt-2">
           <span>New on our platform?</span>
           <a href="{{url('auth/register-cover')}}"><span>&nbsp;Create an account</span></a>
         </p>
-        <div class="divider my-2">
-          <div class="divider-text">or</div>
-        </div>
-        <div class="auth-footer-btn d-flex justify-content-center">
-          <a class="btn btn-facebook" href="#"><i data-feather="facebook"></i></a>
-          <a class="btn btn-twitter white" href="#"><i data-feather="twitter"></i></a>
-          <a class="btn btn-google" href="#"><i data-feather="mail"></i></a>
-          <a class="btn btn-github" href="#"><i data-feather="github"></i></a>
-        </div>
+
       </div>
     </div>
     <!-- /Login-->
   </div>
 </div>
 @endsection
-
 @section('vendor-script')
-<script src="{{asset(mix('vendors/js/forms/validation/jquery.validate.min.js'))}}"></script>
+  <script src="{{ asset(mix('vendors/js/forms/validation/jquery.validate.min.js')) }}"></script>
+  <script src="{{ asset(mix('vendors/js/extensions/sweetalert2.all.min.js')) }}"></script>
 @endsection
 
 @section('page-script')
-<script src="{{asset(mix('js/scripts/pages/auth-login.js'))}}"></script>
+<script>
+$(document).ready(function() {
+  // Interceptar o envio do formulário
+  $('.auth-login-form').on('submit', function(e) {
+    e.preventDefault(); // Prevenir o comportamento padrão do formulário
+
+    // Obter os valores dos campos
+    const email = $('#login-email').val();
+    const password = $('#login-password').val();
+    const remember = $('#remember-me').is(':checked') ? 1 : 0;
+
+    // Mostrar loading no botão
+    const submitBtn = $(this).find('button[type="submit"]');
+    submitBtn.prop('disabled', true);
+    submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...');
+
+    // Enviar via AJAX
+    $.ajax({
+      url: '/auth/login',
+      type: 'POST',
+      data: {
+        email: email,
+        password: password,
+        remember: remember,
+        _token: '{{ csrf_token() }}'
+      },
+      success: function(response) {
+        // Redirecionar para a página de destino após login bem-sucedido
+        window.location.href = response.redirect || '/dashboard';
+      },
+      error: function(xhr) {
+        // Reativar o botão
+        submitBtn.prop('disabled', false);
+        submitBtn.text('Sign in');
+
+        // Mostrar mensagem de erro
+        let errorMessage = 'Falha ao login. Verifique seus dados.';
+
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro!',
+          text: errorMessage,
+          confirmButtonText: 'OK',
+          customClass: {
+            confirmButton: 'btn btn-primary'
+          },
+          buttonsStyling: false
+        });
+      }
+    });
+  });
+
+  // Toggle para mostrar/esconder senha
+  $('.form-password-toggle i').on('click', function() {
+    const input = $(this).parent().siblings('input');
+    const icon = $(this);
+
+    if (input.attr('type') === 'password') {
+      input.attr('type', 'text');
+      icon.replaceWith('<i data-feather="eye-off"></i>');
+    } else {
+      input.attr('type', 'password');
+      icon.replaceWith('<i data-feather="eye"></i>');
+    }
+
+    feather.replace();
+  });
+});
+</script>
 @endsection

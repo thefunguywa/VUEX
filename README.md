@@ -119,3 +119,24 @@ resolve: {
   }  
 }  
 
+
+
+
+
+
+laravel passpot
+
+Execute este comando para instalar a versão mais recente compatível com PHP 8.1:
+
+        // Configuração básica do Passport para MVC
+  
+
+        // Tempo de expiração dos tokens (opcional)
+        Passport::tokensExpireIn(now()->addDays(15));
+        Passport::refreshTokensExpireIn(now()->addDays(30));
+
+
+php artisan jwt:secret
+
+
+$ php artisan jetstream:install inertia

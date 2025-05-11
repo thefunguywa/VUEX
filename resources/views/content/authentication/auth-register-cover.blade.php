@@ -9,6 +9,9 @@ $configData = Helper::applClasses();
   {{-- Page Css files --}}
   <link rel="stylesheet" href="{{ asset(mix('css/base/plugins/forms/form-validation.css')) }}">
   <link rel="stylesheet" href="{{ asset(mix('css/base/pages/authentication.css')) }}">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="{{ asset('vendors/css/animate/animate.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('vendors/css/extensions/sweetalert2.min.css') }}">
 @endsection
 
 @section('content')
@@ -60,29 +63,41 @@ $configData = Helper::applClasses();
       <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
         <h2 class="card-title fw-bold mb-1">Adventure starts here 🚀</h2>
         <p class="card-text mb-2">Make your app management easy and fun!</p>
-        <form class="auth-register-form mt-2" action="/" method="GET">
+        <form id="registerForm" class="auth-register-form mt-2">
+          @csrf
           <div class="mb-1">
-            <label class="form-label" for="register-username">Username</label>
-            <input class="form-control" id="register-username" type="text" name="register-username" placeholder="johndoe" aria-describedby="register-username" autofocus="" tabindex="1" />
+            <label class="form-label" for="name">Username</label>
+            <input class="form-control" id="name" type="text" name="name" placeholder="johndoe" aria-describedby="name" autofocus tabindex="1" />
+            <div class="invalid-feedback" id="name-error"></div>
           </div>
           <div class="mb-1">
-            <label class="form-label" for="register-email">Email</label>
-            <input class="form-control" id="register-email" type="text" name="register-email" placeholder="john@example.com" aria-describedby="register-email" tabindex="2" />
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" type="email" name="email" placeholder="john@example.com" aria-describedby="email" tabindex="2" />
+            <div class="invalid-feedback" id="email-error"></div>
           </div>
           <div class="mb-1">
-            <label class="form-label" for="register-password">Password</label>
+            <label class="form-label" for="password">Password</label>
             <div class="input-group input-group-merge form-password-toggle">
-              <input class="form-control form-control-merge" id="register-password" type="password" name="register-password" placeholder="············" aria-describedby="register-password" tabindex="3" />
+              <input class="form-control form-control-merge" id="password" type="password" name="password" placeholder="············" aria-describedby="password" tabindex="3" />
+              <span class="input-group-text cursor-pointer"><i data-feather="eye"></i></span>
+            </div>
+            <div class="invalid-feedback" id="password-error"></div>
+          </div>
+          <div class="mb-1">
+            <label class="form-label" for="password_confirmation">Confirm Password</label>
+            <div class="input-group input-group-merge form-password-toggle">
+              <input class="form-control form-control-merge" id="password_confirmation" type="password" name="password_confirmation" placeholder="············" aria-describedby="password_confirmation" tabindex="4" />
               <span class="input-group-text cursor-pointer"><i data-feather="eye"></i></span>
             </div>
           </div>
           <div class="mb-1">
             <div class="form-check">
-              <input class="form-check-input" id="register-privacy-policy" type="checkbox" tabindex="4" />
-              <label class="form-check-label" for="register-privacy-policy">I agree to<a href="#">&nbsp;privacy policy & terms</a></label>
+              <input class="form-check-input" id="terms" name="terms" type="checkbox" tabindex="5" required />
+              <label class="form-check-label" for="terms">I agree to<a href="#">&nbsp;privacy policy & terms</a></label>
+              <div class="invalid-feedback">You must agree to the terms and conditions</div>
             </div>
           </div>
-          <button class="btn btn-primary w-100" tabindex="5">Sign up</button>
+          <button type="submit" class="btn btn-primary w-100" tabindex="6" id="register-btn">Sign up</button>
         </form>
         <p class="text-center mt-2">
           <span>Already have an account?</span>
@@ -106,8 +121,161 @@ $configData = Helper::applClasses();
 
 @section('vendor-script')
 <script src="{{asset('vendors/js/forms/validation/jquery.validate.min.js')}}"></script>
+<!-- SweetAlert2 -->
+<script src="{{ asset('vendors/js/extensions/sweetalert2.all.min.js') }}"></script>
 @endsection
 
 @section('page-script')
-<script src="{{asset('js/scripts/pages/auth-register.js')}}"></script>
+<script>
+$(document).ready(function() {
+    // Verifica se o SweetAlert2 está carregado
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 não está carregado');
+    }
+
+    // CSRF Token setup for AJAX
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
+    // Form submission handler
+    $('#registerForm').on('submit', function(e) {
+        e.preventDefault();
+
+        // Reset validation
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+
+        // Validação básica do front-end
+        if (!$('#terms').is(':checked')) {
+            $('#terms').addClass('is-invalid');
+            Swal.fire({
+                title: 'Terms Required',
+                text: 'You must agree to the terms and conditions',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Verifica se as senhas coincidem
+        if ($('#password').val() !== $('#password_confirmation').val()) {
+            $('#password, #password_confirmation').addClass('is-invalid');
+            $('#password-error').text('Passwords do not match');
+            Swal.fire({
+                title: 'Password Mismatch',
+                text: 'The passwords you entered do not match',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Mostra loading no botão
+        const registerBtn = $('#register-btn');
+        registerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing up...');
+
+        // Cria FormData para enviar os dados (melhor para debugging)
+        const formData = new FormData();
+        formData.append('name', $('#name').val());
+        formData.append('email', $('#email').val());
+        formData.append('password', $('#password').val());
+        formData.append('password_confirmation', $('#password_confirmation').val());
+        formData.append('terms', $('#terms').is(':checked') ? '1' : '0');
+
+        // Debug: Mostra os dados que serão enviados
+        console.log('Dados sendo enviados:', {
+            name: $('#name').val(),
+            email: $('#email').val(),
+            password: $('#password').val(),
+            password_confirmation: $('#password_confirmation').val(),
+            terms: $('#terms').is(':checked')
+        });
+
+        // AJAX request
+        $.ajax({
+            url: "{{ route('register') }}",
+            type: "POST",
+            data: formData,
+            processData: false, // Necessário para FormData
+            contentType: false, // Necessário para FormData
+            dataType: "json",
+            success: function(response) {
+                console.log('Resposta do servidor:', response);
+
+                if(response.token && response.user) {
+                    // Store token
+                    localStorage.setItem('authToken', response.token);
+
+                    // Mostra mensagem de sucesso
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Registration completed successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'Continue',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        willClose: () => {
+                            // Redirect to dashboard
+                            window.location.href = response.redirect || '/dashboard';
+                        }
+                    });
+                } else {
+                    // Caso não receba token mas a requisição foi bem sucedida
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message || 'Registration completed successfully! Please login.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '/login';
+                    });
+                }
+            },
+            error: function(xhr) {
+                console.error('Erro na requisição:', xhr);
+                // Reativa o botão
+                registerBtn.prop('disabled', false).html('Sign up');
+
+                // Trata erros de validação
+                if(xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    for(let field in errors) {
+                        $(`#${field}`).addClass('is-invalid');
+                        $(`#${field}-error`).text(errors[field][0]);
+                    }
+
+                    // Mostra o primeiro erro com SweetAlert
+                    const firstError = Object.values(errors)[0][0];
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: firstError,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    // Outros erros
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : 'An error occurred during registration. Please try again.';
+
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+    });
+
+    // Initialize Feather Icons
+    if (feather) {
+        feather.replace({ width: 14, height: 14 });
+    }
+});
+</script>
 @endsection
