@@ -6,7 +6,7 @@ RUN apt-get update \
       build-essential autoconf pkg-config \
       libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
       libwebp-dev libxpm-dev libonig-dev libxml2-dev libssl-dev \
-      libcurl4-openssl-dev \         # ← add this line
+      libcurl4-openssl-dev \
       zip unzip git supervisor sqlite3 \
  && rm -rf /var/lib/apt/lists/*
 
