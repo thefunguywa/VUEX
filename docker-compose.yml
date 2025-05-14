@@ -14,8 +14,6 @@ services:
       - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
     networks:
       - webproxy
-    volumes:
-      - ".:/var/www/html"
     depends_on:
       - mysql
 
