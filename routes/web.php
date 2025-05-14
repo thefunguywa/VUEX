@@ -28,26 +28,32 @@ use App\Http\Controllers\ChartsController;
 */
 
 // Rota raiz redireciona para o login
+Route::redirect('/', '/auth/login-cover');
 
-// Redirecionamento raiz
-Route::redirect('/', '/auth/login-cover')->name('root.redirect');
+/* Route Authentication Pages */
+Route::group(['prefix' => 'auth'], function () {
+    // Rotas de visualização
+    Route::get('login-cover', [AuthenticationController::class, 'login_cover'])->name('auth-login-cover');
+    Route::get('register-basic', [AuthenticationController::class, 'register_basic'])->name('auth-register-basic');
+    Route::get('register-cover', [AuthenticationController::class, 'register_cover'])->name('auth-register-cover');
+    Route::get('forgot-password-basic', [AuthenticationController::class, 'forgot_password_basic'])->name('auth-forgot-password-basic');
+    Route::get('forgot-password-cover', [AuthenticationController::class, 'forgot_password_cover'])->name('auth-forgot-password-cover');
+    Route::get('reset-password-basic', [AuthenticationController::class, 'reset_password_basic'])->name('auth-reset-password-basic');
+    Route::get('reset-password-cover', [AuthenticationController::class, 'reset_password_cover'])->name('auth-reset-password-cover');
+    Route::get('verify-email-basic', [AuthenticationController::class, 'verify_email_basic'])->name('auth-verify-email-basic');
+    Route::get('verify-email-cover', [AuthenticationController::class, 'verify_email_cover'])->name('auth-verify-email-cover');
+    Route::get('two-steps-basic', [AuthenticationController::class, 'two_steps_basic'])->name('auth-two-steps-basic');
+    Route::get('two-steps-cover', [AuthenticationController::class, 'two_steps_cover'])->name('auth-two-steps-cover');
+    Route::get('register-multisteps', [AuthenticationController::class, 'register_multi_steps'])->name('auth-register-multisteps');
+    Route::get('lock-screen', [AuthenticationController::class, 'lock_screen'])->name('auth-lock_screen');
 
-/* Grupo de Autenticação */
-Route::prefix('auth')->name('auth.')->group(function () {
-    /* Rotas de Visualização */
-    Route::get('login-cover', [AuthenticationController::class, 'loginCover'])->name('login-cover');
-    Route::get('register-cover', [AuthenticationController::class, 'registerCover'])->name('register-cover');
-    Route::get('forgot-password-cover', [AuthenticationController::class, 'forgotPasswordCover'])->name('forgot-password-cover');
-    Route::get('reset-password-cover', [AuthenticationController::class, 'resetPasswordCover'])->name('reset-password-cover');
-
-    /* Rotas de Ação */
+    // Rotas de ação
     Route::post('login', [AuthenticationController::class, 'login'])->name('login');
     Route::post('register', [AuthenticationController::class, 'register'])->name('register');
-    Route::post('logout', [AuthenticationController::class, 'logout'])->name('logout');
-    Route::post('forgot-password', [AuthenticationController::class, 'forgotPassword'])->name('forgot-password.post');
-    Route::post('reset-password', [AuthenticationController::class, 'resetPassword'])->name('reset-password.post');
-});
+    Route::post('forgot-password', [AuthenticationController::class, 'forgot_password'])->name('forgot-password');
+    Route::post('reset-password', [AuthenticationController::class, 'reset_password'])->name('reset-password');
 
+});
 
 // Grupo de rotas protegidas por autenticação
 Route::middleware(['auth'])->group(function () {
