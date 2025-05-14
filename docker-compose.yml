@@ -7,7 +7,6 @@ services:
       dockerfile: docker/8.1/Dockerfile
       args:
         WWWGROUP: "${WWWGROUP}"
-    image: sail-8.1/app
     labels:
       - "VIRTUAL_HOST=bobflows.com"
       - "LETSENCRYPT_HOST=bobflows.com"
