@@ -37,7 +37,6 @@ COPY . .
 # 4) Install PHP deps & optimize
 RUN composer install --no-dev --optimize-autoloader \
   && php artisan key:generate --ansi \
-  && php artisan clear-compiled \
-  && php artisan optimize
+  && php artisan clear-compiled
 
 CMD ["php-fpm"]
