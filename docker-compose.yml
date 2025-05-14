@@ -1,20 +1,30 @@
 version: '3.8'
 
 services:
-  laravel.test:
+  php-fpm:
     build:
       context: .
       dockerfile: docker/8.1/Dockerfile
       args:
         WWWGROUP: "${WWWGROUP}"
-    labels:
-      - "VIRTUAL_HOST=bobflows.com"
-      - "LETSENCRYPT_HOST=bobflows.com"
-      - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
     networks:
       - webproxy
     depends_on:
       - mysql
+
+  web:
+    image: nginx:alpine
+    labels:
+      - "VIRTUAL_HOST=bobflows.com"
+      - "LETSENCRYPT_HOST=bobflows.com"
+      - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/vhost.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - webproxy
+    depends_on:
+      - php-fpm
 
   mysql:
     image: mysql:8.0
