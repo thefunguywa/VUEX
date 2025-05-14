@@ -3,7 +3,7 @@ FROM php:8.1-fpm
 # 1) install build tools & all -dev headers GD, curl, SSL, etc. need
 RUN apt-get update && apt-get install -y \
     build-essential autoconf pkg-config \
-    libcurl4-openssl-dev libcurl4-gnutls-dev \
+    libcurl4-openssl-dev \
     libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libwebp-dev libxpm-dev libonig-dev libxml2-dev libssl-dev \
     zip unzip git supervisor sqlite3 \
