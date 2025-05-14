@@ -1,23 +1,16 @@
-# docker/8.1/Dockerfile
 FROM php:8.1-fpm
 
-# 1) Install build tools + ALL -dev headers GD, zip, curl, SSL, etc. need
+# 1) install build tools & all -dev headers GD, curl, SSL, etc. need
 RUN apt-get update \
  && apt-get install -y \
       build-essential autoconf pkg-config \
-      libzip-dev \
-      libpng-dev \
-      libjpeg62-turbo-dev \
-      libfreetype6-dev \
-      libwebp-dev \
-      libxpm-dev \
-      libonig-dev \
-      libxml2-dev \
-      libssl-dev \
+      libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+      libwebp-dev libxpm-dev libonig-dev libxml2-dev libssl-dev \
+      libcurl4-openssl-dev \         # ← add this line
       zip unzip git supervisor sqlite3 \
  && rm -rf /var/lib/apt/lists/*
 
-# 2) Configure & install PHP extensions + PECL
+# 2) configure & install PHP extensions + PECL
 RUN docker-php-ext-configure gd \
       --with-jpeg \
       --with-freetype \
@@ -33,8 +26,7 @@ RUN docker-php-ext-configure gd \
       bcmath \
       curl \
  && pecl install redis swoole \
- && docker-php-ext-enable redis swoole \
- && rm -rf /tmp/pear
+ && docker-php-ext-enable redis swoole
 
 # 3) Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
