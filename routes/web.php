@@ -49,10 +49,13 @@ Route::group(['prefix' => 'auth'], function () {
 
     // Rotas de ação
     Route::post('login', [AuthenticationController::class, 'login'])->name('login');
-    Route::post('logout', [AuthenticationController::class, 'logout'])->name('logout');
     Route::post('register', [AuthenticationController::class, 'register'])->name('register');
     Route::post('forgot-password', [AuthenticationController::class, 'forgot_password'])->name('forgot-password');
     Route::post('reset-password', [AuthenticationController::class, 'reset_password'])->name('reset-password');
+
+    Route::get('auth/login-cover', function () {
+        return view('auth/login-cover');
+    })->name('login.cover');
 });
 
 // Grupo de rotas protegidas por autenticação
