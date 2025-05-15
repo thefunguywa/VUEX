@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         // Force generated URLs (asset(), route(), etc.) to use HTTPS
+        URL::forceRootUrl(config('app.url'));
         URL::forceScheme('https');
     }
 }
