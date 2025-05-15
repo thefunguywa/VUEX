@@ -35,6 +35,9 @@ WORKDIR /var/www/html
 COPY . .
 
 # 4) Install PHP deps & optimize
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 775 storage bootstrap/cache
+ 
 RUN composer install --no-dev --optimize-autoloader \
   && php artisan key:generate --ansi \
   && php artisan clear-compiled
