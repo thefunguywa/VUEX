@@ -14,10 +14,10 @@ services:
     build:
       context: docker/nginx
       dockerfile: Dockerfile
-    labels:
-      - "VIRTUAL_HOST=bobflows.com"
-      - "LETSENCRYPT_HOST=bobflows.com"
-      - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
+    environment:
+      VIRTUAL_HOST: "bobflows.com"
+      LETSENCRYPT_HOST: "bobflows.com"
+      LETSENCRYPT_EMAIL: "bobflows99@gmail.com"
     volumes:
       - code-data:/var/www/html:ro
     networks:
@@ -29,10 +29,10 @@ services:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "${DB_DATABASE}"
-      MYSQL_USER: "${DB_USERNAME}"
-      MYSQL_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE:    "${DB_DATABASE}"
+      MYSQL_USER:        "${DB_USERNAME}"
+      MYSQL_PASSWORD:    "${DB_PASSWORD}"
+      MYSQL_ROOT_HOST:   "%"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
