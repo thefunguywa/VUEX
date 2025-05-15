@@ -30,7 +30,7 @@ class AuthenticationController extends Controller
         return view('/content/authentication/auth-login-cover', ['pageConfigs' => $pageConfigs]);
     }
 
-
+    // Login com JWT
     public function login(Request $request)
     {
         // Validação

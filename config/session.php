@@ -155,9 +155,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN', '.srv819011.hstgr.cloud'),
-    'secure' => env('SESSION_SECURE_COOKIE', false),
-    'same_site' => 'lax',
+    'domain' => env('SESSION_DOMAIN'),
 
     /*
     |--------------------------------------------------------------------------

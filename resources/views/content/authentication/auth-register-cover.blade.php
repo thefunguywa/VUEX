@@ -103,7 +103,7 @@ $configData = Helper::applClasses();
           <span>Already have an account?</span>
           <a href="{{url('auth/login-cover')}}"><span>&nbsp;Sign in instead</span></a>
         </p>
-
+      
       </div>
     </div>
     <!-- /Register-->
@@ -119,126 +119,155 @@ $configData = Helper::applClasses();
 
 @section('page-script')
 <script>
-
-    $('#registerForm').on('submit', function(e) {
-    e.preventDefault();
-
-    // Reset validation
-    $('.is-invalid').removeClass('is-invalid');
-    $('.invalid-feedback').text('');
-
-    // Validate terms checkbox
-    if (!$('#terms').is(':checked')) {
-        $('#terms').addClass('is-invalid');
-        Swal.fire({
-            title: 'Terms Required',
-            text: 'You must agree to the terms and conditions',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-        return;
+$(document).ready(function() {
+    // Verifica se o SweetAlert2 está carregado
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 não está carregado');
     }
 
-    // Validate password match
-    if ($('#password').val() !== $('#password_confirmation').val()) {
-        $('#password, #password_confirmation').addClass('is-invalid');
-        $('#password-error').text('Passwords do not match');
-        Swal.fire({
-            title: 'Password Mismatch',
-            text: 'The passwords you entered do not match',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-        return;
-    }
-
-    // Show loading state
-    const registerBtn = $('#register-btn');
-    registerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing up...');
-
-    // Create form data
-    const formData = {
-        name: $('#name').val(),
-        email: $('#email').val(),
-        password: $('#password').val(),
-        password_confirmation: $('#password_confirmation').val(),
-        terms: $('#terms').is(':checked') ? 1 : 0
-    };
-
-    // Make AJAX request
-    $.ajax({
-        url: "{{ route('register') }}",
-        type: "POST",
-        data: formData,
-        dataType: "json",
-        success: function(response) {
-            // Handle success
-            if(response.token && response.user) {
-                localStorage.setItem('authToken', response.token);
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Registration completed successfully!',
-                    icon: 'success',
-                    confirmButtonText: 'Continue',
-                    timer: 2000,
-                    timerProgressBar: true,
-                    willClose: () => {
-                        window.location.href = response.redirect || '/dashboard';
-                    }
-                });
-            } else {
-                Swal.fire({
-                    title: 'Success!',
-                    text: response.message || 'Registration completed successfully! Please login.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '/login';
-                });
-            }
-        },
-        error: function(xhr) {
-            registerBtn.prop('disabled', false).html('Sign up');
-
-            if(xhr.status === 419) {
-                // CSRF token mismatch - reload page to get new token
-                Swal.fire({
-                    title: 'Session Expired',
-                    text: 'Please refresh the page and try again',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload();
-                });
-            } else if(xhr.status === 422) {
-                // Validation errors
-                let errors = xhr.responseJSON.errors;
-                for(let field in errors) {
-                    $(`#${field}`).addClass('is-invalid');
-                    $(`#${field}-error`).text(errors[field][0]);
-                }
-                Swal.fire({
-                    title: 'Validation Error',
-                    text: Object.values(errors)[0][0],
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                // Other errors
-                Swal.fire({
-                    title: 'Error!',
-                    text: xhr.responseJSON?.message || 'An error occurred during registration.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            }
+    // CSRF Token setup for AJAX
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-});
 
- // Initialize Feather Icons
+    // Form submission handler
+    $('#registerForm').on('submit', function(e) {
+        e.preventDefault();
+
+        // Reset validation
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+
+        // Validação básica do front-end
+        if (!$('#terms').is(':checked')) {
+            $('#terms').addClass('is-invalid');
+            Swal.fire({
+                title: 'Terms Required',
+                text: 'You must agree to the terms and conditions',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Verifica se as senhas coincidem
+        if ($('#password').val() !== $('#password_confirmation').val()) {
+            $('#password, #password_confirmation').addClass('is-invalid');
+            $('#password-error').text('Passwords do not match');
+            Swal.fire({
+                title: 'Password Mismatch',
+                text: 'The passwords you entered do not match',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Mostra loading no botão
+        const registerBtn = $('#register-btn');
+        registerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing up...');
+
+        // Cria FormData para enviar os dados (melhor para debugging)
+        const formData = new FormData();
+        formData.append('name', $('#name').val());
+        formData.append('email', $('#email').val());
+        formData.append('password', $('#password').val());
+        formData.append('password_confirmation', $('#password_confirmation').val());
+        formData.append('terms', $('#terms').is(':checked') ? '1' : '0');
+
+        // Debug: Mostra os dados que serão enviados
+        console.log('Dados sendo enviados:', {
+            name: $('#name').val(),
+            email: $('#email').val(),
+            password: $('#password').val(),
+            password_confirmation: $('#password_confirmation').val(),
+            terms: $('#terms').is(':checked')
+        });
+
+        // AJAX request
+        $.ajax({
+            url: "{{ route('register') }}",
+            type: "POST",
+            data: formData,
+            processData: false, // Necessário para FormData
+            contentType: false, // Necessário para FormData
+            dataType: "json",
+            success: function(response) {
+                console.log('Resposta do servidor:', response);
+
+                if(response.token && response.user) {
+                    // Store token
+                    localStorage.setItem('authToken', response.token);
+
+                    // Mostra mensagem de sucesso
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Registration completed successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'Continue',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        willClose: () => {
+                            // Redirect to dashboard
+                            window.location.href = response.redirect || '/dashboard';
+                        }
+                    });
+                } else {
+                    // Caso não receba token mas a requisição foi bem sucedida
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message || 'Registration completed successfully! Please login.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '/login';
+                    });
+                }
+            },
+            error: function(xhr) {
+                console.error('Erro na requisição:', xhr);
+                // Reativa o botão
+                registerBtn.prop('disabled', false).html('Sign up');
+
+                // Trata erros de validação
+                if(xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    for(let field in errors) {
+                        $(`#${field}`).addClass('is-invalid');
+                        $(`#${field}-error`).text(errors[field][0]);
+                    }
+
+                    // Mostra o primeiro erro com SweetAlert
+                    const firstError = Object.values(errors)[0][0];
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: firstError,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    // Outros erros
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : 'An error occurred during registration. Please try again.';
+
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+    });
+
+    // Initialize Feather Icons
     if (feather) {
         feather.replace({ width: 14, height: 14 });
     }
+});
 </script>
 @endsection
