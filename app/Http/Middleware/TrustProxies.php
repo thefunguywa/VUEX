@@ -12,7 +12,7 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    // Trust all proxies (so X-Forwarded-* headers from nginx-proxy are honored)
+    // Trust all proxies so nginx-proxy’s headers are honored
     protected $proxies = '*';
 
     /**
@@ -20,5 +20,10 @@ class TrustProxies extends Middleware
      *
      * @var int
      */
-    protected $headers = Request::HEADER_X_FORWARDED_ALL;
+    // Combine only the four standard forwarded headers
+    protected $headers =
+          Request::HEADER_X_FORWARDED_FOR
+        | Request::HEADER_X_FORWARDED_HOST
+        | Request::HEADER_X_FORWARDED_PORT
+        | Request::HEADER_X_FORWARDED_PROTO;
 }
