@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordMail;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Validator;
 
 class AuthenticationController extends Controller
 {
@@ -29,15 +30,26 @@ class AuthenticationController extends Controller
         return view('/content/authentication/auth-login-cover', ['pageConfigs' => $pageConfigs]);
     }
 
-    // Login com JWT
+
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+        // Validação
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|min:8|max:32',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+                'message' => 'Erro de validação.'
+            ], 422);
+        }
+
         try {
+            $credentials = $request->only('email', 'password');
+
             if (!$token = JWTAuth::attempt($credentials)) {
                 return response()->json([
                     'success' => false,
@@ -50,11 +62,16 @@ class AuthenticationController extends Controller
             return response()->json([
                 'success' => true,
                 'token' => $token,
-                'user' => $user,
-                'redirect' => '/dashboard',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+                'redirect' => route('dashboard-analytics'), // Redirecionamento fixo
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60
             ]);
+
         } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
@@ -62,6 +79,7 @@ class AuthenticationController extends Controller
             ], 500);
         }
     }
+
 
     public function register(Request $request)
     {
@@ -130,23 +148,16 @@ class AuthenticationController extends Controller
             : response()->json(['success' => false, 'message' => __($status)], 400);
     }
 
-    // Logout
-    public function logout()
-    {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout realizado com sucesso',
-                'redirect' => '/login'
-            ]);
-        } catch (JWTException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Falha ao realizar logout'
-            ], 500);
-        }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login.cover')->with('success', 'Logout realizado com sucesso');
     }
 
     // Métodos de visualização (mantidos como antes)
@@ -214,5 +225,18 @@ class AuthenticationController extends Controller
     {
         $pageConfigs = ['blankPage' => true];
         return view('/content/authentication/auth-register-multisteps', ['pageConfigs' => $pageConfigs]);
+    }
+
+    // Método auxiliar para determinar o redirecionamento
+    protected function determineRedirectPath($user)
+    {
+        // Lógica personalizada para redirecionamento baseado em roles/permissões
+        if ($user->hasRole('admin')) {
+            return route('admin.dashboard');
+        } elseif ($user->hasRole('manager')) {
+            return route('manager.dashboard');
+        }
+
+        return route('dashboard-analytics');
     }
 }

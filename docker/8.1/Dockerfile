@@ -1,4 +1,6 @@
-# 1) builder: PHP + Node + composer + build step
+# docker/8.1/Dockerfile
+
+# ─── 1) builder: install PHP, Node, build everything ─────────────────────────
 FROM php:8.1-fpm AS builder
 
 RUN apt-get update && apt-get install -y \
@@ -8,17 +10,17 @@ RUN apt-get update && apt-get install -y \
     libssl-dev zip unzip git supervisor sqlite3 \
   && rm -rf /var/lib/apt/lists/*
 
-# install PHP extensions + PECL
+# PHP extensions + PECL
 RUN docker-php-ext-configure gd \
       --with-jpeg --with-freetype --with-webp --with-xpm \
   && docker-php-ext-install pdo_mysql mbstring zip gd opcache xml bcmath curl \
   && pecl install redis swoole \
   && docker-php-ext-enable redis swoole
 
-# install Composer
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# install Node.js 16
+# Node.js 16
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
   && apt-get update && apt-get install -y nodejs \
   && npm install -g npm@9 \
@@ -27,21 +29,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
 WORKDIR /var/www/html
 COPY . .
 
-# build frontend assets
+# Build frontend
 RUN npm ci && npm run production
 
-# install PHP deps & cache config
+# Install PHP deps & optimize
 RUN composer install --no-dev --optimize-autoloader \
   && php artisan key:generate --ansi \
   && php artisan clear-compiled \
   && php artisan config:cache
 
-# fix permissions for storage, cache & public
+# Fix perms
 RUN chown -R www-data:www-data storage bootstrap/cache public \
   && chmod -R 775 storage bootstrap/cache public
 
-# 2) runtime: inherit EVERYTHING from builder
-FROM builder
+# ─── 2) runtime: slim php-fpm image ──────────────────────────────────────────
+FROM php:8.1-fpm
+
+WORKDIR /var/www/html
+COPY --from=builder /var/www/html /var/www/html
 
 EXPOSE 9000
 CMD ["php-fpm"]
