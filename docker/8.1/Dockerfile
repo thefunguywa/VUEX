@@ -1,6 +1,6 @@
 FROM php:8.1-fpm
 
-# 1) install build tools & all -dev headers GD, curl, SSL, etc. need
+# 1) install build tools & all -dev headers GD, curl, SSL, etc.
 RUN apt-get update && apt-get install -y \
     build-essential autoconf pkg-config \
     libcurl4-openssl-dev \
@@ -16,14 +16,7 @@ RUN docker-php-ext-configure gd \
       --with-webp \
       --with-xpm \
   && docker-php-ext-install \
-      pdo_mysql \
-      mbstring \
-      zip \
-      gd \
-      opcache \
-      xml \
-      bcmath \
-      curl \
+      pdo_mysql mbstring zip gd opcache xml bcmath curl \
   && pecl install redis swoole \
   && docker-php-ext-enable redis swoole \
   && rm -rf /tmp/pear
@@ -34,12 +27,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# 4) Install PHP deps & optimize
+# 4) Fix storage & cache permissions, then install dependencies & cache config
 RUN chown -R www-data:www-data storage bootstrap/cache \
- && chmod -R 775 storage bootstrap/cache
- 
-RUN composer install --no-dev --optimize-autoloader \
-  && php artisan key:generate --ansi \
-  && php artisan clear-compiled
+ && chmod -R 775 storage bootstrap/cache \
+ && composer install --no-dev --optimize-autoloader \
+ && php artisan key:generate --ansi \
+ && php artisan clear-compiled \
+ && php artisan config:cache
 
 CMD ["php-fpm"]
