@@ -16,10 +16,10 @@ services:
     build:
       context: docker/nginx
       dockerfile: Dockerfile
-    labels:
-      - "VIRTUAL_HOST=bobflows.com"
-      - "LETSENCRYPT_HOST=bobflows.com"
-      - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
+    environment:
+      VIRTUAL_HOST: bobflows.com
+      LETSENCRYPT_HOST: bobflows.com
+      LETSENCRYPT_EMAIL: bobflows99@gmail.com
     volumes:
       - .:/var/www/html:ro
     networks:
