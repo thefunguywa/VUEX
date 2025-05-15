@@ -5,23 +5,21 @@ services:
     build:
       context: .
       dockerfile: docker/8.1/Dockerfile
-      args:
-        WWWGROUP: "${WWWGROUP}"
+    volumes:
+      - code-data:/var/www/html:ro
     networks:
       - webproxy
-    depends_on:
-      - mysql
 
   web:
     build:
       context: docker/nginx
       dockerfile: Dockerfile
-    environment:
-      VIRTUAL_HOST: bobflows.com
-      LETSENCRYPT_HOST: bobflows.com
-      LETSENCRYPT_EMAIL: bobflows99@gmail.com
+    labels:
+      - "VIRTUAL_HOST=bobflows.com"
+      - "LETSENCRYPT_HOST=bobflows.com"
+      - "LETSENCRYPT_EMAIL=bobflows99@gmail.com"
     volumes:
-      - .:/var/www/html:ro
+      - code-data:/var/www/html:ro
     networks:
       - webproxy
     depends_on:
@@ -45,5 +43,5 @@ networks:
     external: true
 
 volumes:
+  code-data:
   mysql-data:
-    driver: local
