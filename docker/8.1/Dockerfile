@@ -43,10 +43,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache public \
   && chmod -R 775 storage bootstrap/cache public
 
 # ─── 2) runtime: slim php-fpm image ──────────────────────────────────────────
-FROM php:8.1-fpm
-
-WORKDIR /var/www/html
-COPY --from=builder /var/www/html /var/www/html
+FROM builder
 
 EXPOSE 9000
 CMD ["php-fpm"]
