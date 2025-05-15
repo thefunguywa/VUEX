@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: docker/8.1/Dockerfile
     volumes:
-      - code-data:/var/www/html:ro
+      - code-data:/var/www/html
     networks:
       - webproxy
 
